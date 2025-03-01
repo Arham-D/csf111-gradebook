@@ -1,0 +1,1 @@
+Removed some columns which were not of use in the excel file and printed campusID instead of emplid in the rankings as emplid wasn't used anywhere. Also corrected the comparision in computedTotal and total (had to use float64 instead of int) just before 12 am so now works correctly. 
