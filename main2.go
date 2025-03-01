@@ -16,13 +16,13 @@ type Student struct {
 	CampusID   string
 	ClassNo    string
 	Branch     string
-	Quiz       int
-	MidSem     int
-	LabTest    int
-	WeeklyLabs int
-	PreCompre  int
-	Compre     int
-	Total      int
+	Quiz       float64
+	MidSem     float64
+	LabTest    float64
+	WeeklyLabs float64
+	PreCompre  float64
+	Compre     float64
+	Total      float64
 }
 
 type Report struct {
@@ -34,7 +34,7 @@ type Report struct {
 
 type RankingEntry struct {
 	CampusID string
-	Score    int
+	Score    float64
 	Rank     string
 }
 
@@ -126,17 +126,17 @@ func parseExcel(filePath string, filterClass string) ([]Student, []string) {
 			continue
 		}
 
-		quiz, _ := strconv.Atoi(row[indexMap["Quiz"]])
-		midSem, _ := strconv.Atoi(row[indexMap["MidSem"]])
-		labTest, _ := strconv.Atoi(row[indexMap["LabTest"]])
-		weeklyLabs, _ := strconv.Atoi(row[indexMap["WeeklyLabs"]])
-		preCompre, _ := strconv.Atoi(row[indexMap["PreCompre"]])
-		compre, _ := strconv.Atoi(row[indexMap["Compre"]])
-		total, _ := strconv.Atoi(row[indexMap["Total"]])
+		quiz, _ := strconv.ParseFloat(row[indexMap["Quiz"]], 64)
+		midSem, _ := strconv.ParseFloat(row[indexMap["MidSem"]], 64)
+		labTest, _ := strconv.ParseFloat(row[indexMap["LabTest"]], 64)
+		weeklyLabs, _ := strconv.ParseFloat(row[indexMap["WeeklyLabs"]], 64)
+		preCompre, _ := strconv.ParseFloat(row[indexMap["PreCompre"]], 64)
+		compre, _ := strconv.ParseFloat(row[indexMap["Compre"]], 64)
+		total, _ := strconv.ParseFloat(row[indexMap["Total"]], 64)
 
 		computedTotal := quiz + midSem + labTest + weeklyLabs + compre
-		if computedTotal != total {
-			errors = append(errors, fmt.Sprintf("Error: Mismatch for CAMPUSID %s -> Expected %d, Found %d", campusid, computedTotal, total))
+		if abs(computedTotal-total) > 0.01 {
+			errors = append(errors, fmt.Sprintf("Error: Mismatch for CAMPUSID %s -> Expected %.2f, Found %.2f", campusid, computedTotal, total))
 		}
 
 		students = append(students, Student{CampusID: campusid, ClassNo: row[indexMap["ClassNo."]], Branch: extractBranch(campusid), Quiz: quiz, MidSem: midSem, LabTest: labTest, WeeklyLabs: weeklyLabs, PreCompre: preCompre, Compre: compre, Total: total})
@@ -151,7 +151,7 @@ func generateReport(students []Student, errors []string) Report {
 	for _, comp := range components {
 		scores := make([]RankingEntry, len(students))
 		for i, s := range students {
-			var score int
+			var score float64
 			switch comp {
 			case "Quiz":
 				score = s.Quiz
@@ -203,7 +203,7 @@ func printReport(report Report) {
 	for comp, entries := range report.Rankings {
 		fmt.Printf(" %s:\n", comp)
 		for _, entry := range entries {
-			fmt.Printf("  %s - %d (%s)\n", entry.CampusID, entry.Score, entry.Rank)
+			fmt.Printf("  %s - %.2f (%s)\n", entry.CampusID, entry.Score, entry.Rank)
 		}
 	}
 
@@ -230,4 +230,11 @@ func exportReport(report Report) {
 	}
 
 	log.Println("Report successfully exported to report.json")
+}
+
+func abs(x float64) float64 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
